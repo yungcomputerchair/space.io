@@ -1,9 +1,9 @@
 {
   "name": "socket-space-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "socket.io app for space.io",
   "dependencies": {
-    "express": "^4.15.2",
-    "socket.io": "^2.4.0"
+    "express": "^4.17.2",
+    "socket.io": "^4.4.1"
   }
 }
