@@ -291,12 +291,11 @@ Client-side HTML file
 				// caluclate ship chunk coordinates
 				var shipCX = Math.floor(getClientShip().xPos / 10000);
 				var shipCY = Math.floor(getClientShip().yPos / 10000);
-				if(!populated(shipCX, shipCY)) // populate chunks around the client ship
-				{
-					for(var ox = -1; ox < 2; ox++) {
-						for(var oy = -1; oy < 2; oy++) {
+				// populate chunks around the client ship
+				for(var ox = -1; ox < 2; ox++) {
+					for(var oy = -1; oy < 2; oy++) {
+						if(!populated(shipCX + ox, shipCY + oy))
 							genChunk(shipCX + ox, shipCY + oy);
-						}
 					}
 				}
 
