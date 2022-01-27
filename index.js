@@ -5,10 +5,21 @@ Gent Semaj
 Server-side node.js file
 */
 
-// Core globals
-var app = require('express')();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+const ARGS = process.argv.slice(2);
+const PORT = ARGS[0] ? ARGS[0] : 3000;
+const USE_SSL = ARGS[1] !== undefined && ARGS[2] !== undefined;
+
+const { readFileSync } = require('fs');
+const express = require('express');
+const app = express();
+const http = require('http');
+const https = require('https');
+const server = USE_SSL ? https.createServer({
+  key: readFileSync(ARGS[1]),
+  cert: readFileSync(ARGS[2])
+}, app) : http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
 
 // Client file to send
 app.get('/', function(req, res){
@@ -16,8 +27,8 @@ app.get('/', function(req, res){
 });
 
 // HTTP listener
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+server.listen(PORT, function(){
+  console.log('listening on *:' + PORT);
 });
 
 // Top-level container
