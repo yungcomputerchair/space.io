@@ -32,7 +32,7 @@ Client-side HTML file
         var observing = false;
         var universe = null; // top-level container
         var stars = []; // star array
-        var chunks = []; // chunk array
+        var chunks = {}; // chunk dict
 
         /** Resize the canvas to fit the browser window
         params:
@@ -227,12 +227,7 @@ Client-side HTML file
         return: true if populated, false if not
         */
         function populated(cx, cy) {
-            for (var ch = 0; ch < chunks.length; ch++) {
-                if (chunks[ch].x == cx && chunks[ch].y == cy) {
-                    return true;
-                }
-            }
-            return false;
+            return chunks[cx] != undefined && chunks[cx][cy] != undefined;
         }
 
         /** Populate a star chunk
@@ -241,13 +236,16 @@ Client-side HTML file
             cy: chunk y coordinate
         */
         function genChunk(cx, cy) {
-            chunks.push({ x: cx, y: cy });
-            console.log("Generated sector (" + cx + ", " + cy + ")");
+            var starsTemp = [];
             for (var i = 0; i < 5000; i++) {
                 var starX = 10000 * (cx + Math.random());
                 var starY = 10000 * (cy + Math.random());
-                stars.push({ x: starX, y: starY });
+                starsTemp.push({ x: starX, y: starY });
             }
+            stars = stars.concat(starsTemp);
+            if(chunks[cx] == undefined) chunks[cx] = {};
+            chunks[cx][cy] = {};
+            console.log("Generated sector (" + cx + ", " + cy + ")");
         }
 
         /** Tick function */
