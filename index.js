@@ -112,14 +112,15 @@ io.on('connection', function (socket) {
         var laser = {
             id: socket.id,
             color: universe.ships[socket.id].color,
-            xPos: universe.ships[socket.id].x,
-            yPos: universe.ships[socket.id].y,
+            xPos: universe.ships[socket.id].xPos,
+            yPos: universe.ships[socket.id].yPos,
             theta: universe.ships[socket.id].theta,
-            vel: universe.ships[socket.id].linVel + 100,
+            vel: universe.ships[socket.id].linVel + 50,
             timer: 29
         };
+        laser.yPos += Math.cos(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
+        laser.xPos += -Math.sin(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
         universe.lasers.push(laser);
-        console.log("pew");
     });
 
     /** Disconnect handler */

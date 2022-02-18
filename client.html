@@ -108,7 +108,7 @@ Client-side HTML file
                 var drawnLaser = universe.lasers[l];
                 reset(ctx);
                 ctx.strokeStyle = drawnLaser.color;
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 3;
                 var stretch = 50;
                 var angle = toStandard(drawnLaser.theta + 90) * Math.PI / 180.0;
 
@@ -288,7 +288,7 @@ Client-side HTML file
                     getClientShip().linVel -= .5;
                 if (indexOf(keys, 32) > -1 && getClientShip().laserTimer == 0) // space bar pressed, shoot laser
                 {
-                    getClientShip().laserTimer = 144;
+                    getClientShip().laserTimer = 85;
                     socket.emit('fire');
                 }
 
@@ -300,8 +300,8 @@ Client-side HTML file
             for (var l = 0; l < universe.lasers.length; l++) {
                 var laser = universe.lasers[l];
 
-                laser.yPos += Math.cos(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
-                laser.xPos += -Math.sin(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
+                //laser.yPos += Math.cos(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
+                //laser.xPos += -Math.sin(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
             }
 
             // all ships
