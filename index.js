@@ -33,11 +33,13 @@ server.listen(PORT, function(){
 
 // Top-level container
 var universe = {
-  ships: [] // array of ships
+  ships: [], // array of ships
+  lasers: [] // array of lasers
 }
 
 // Periodic tick function
 function tick() {
+	io.emit('universe', universe); // update the universe for all clients
 }
 
 /** Removes a ship from the universe ship array
@@ -92,7 +94,7 @@ io.on('connection', function(socket){
 
 	universe.ships.push(clientShip); // add the new client ship to the universe ship array
 
-	io.emit('universe', universe); // send the universe object to the client
+	socket.emit('universe', universe); // send the universe object to the client
 
 	/** Update request handler
 	params:
@@ -100,7 +102,6 @@ io.on('connection', function(socket){
 	*/
 	socket.on('update', function(rec){
 		replaceShip(socket.id, rec); // replace the server's current copy of the client's ship with the new data
-		io.emit('universe', universe); // update the universe for all clients
 	});
 
 	/** Disconnect handler */
