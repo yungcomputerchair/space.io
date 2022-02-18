@@ -7,363 +7,346 @@ Client-side HTML file
 
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <title>space.io</title>
     <style>
+        body {
+            background-color: black;
+            margin: 0px;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-	body {
-		background-color: black;
-		margin: 0px;
-		width: 100vw;
-		height: 100vh;
-		overflow: hidden;
-	}
-
-	#playArea {
-		border: none;
-		position: fixed;
-		top: 0px;
-		left: 0px;
-	}
-
+        #playArea {
+            border: none;
+            position: fixed;
+            top: 0px;
+            left: 0px;
+        }
     </style>
     <script src="/socket.io/socket.io.js"></script> <!-- socket.io dependency -->
     <script type="text/javascript">
 
-		var observing = false;
-		var universe = null; // top-level container
-		var stars = []; // star array
-		var chunks = []; // chunk array
+        var observing = false;
+        var universe = null; // top-level container
+        var stars = []; // star array
+        var chunks = []; // chunk array
 
-		/** Resize the canvas to fit the browser window
-		params:
-			canvas: JavaScript canvas object
-		*/
-		function resizeCanvas(canvas) {
-			canvas.width = document.body.clientWidth;
-			canvas.height = document.body.clientHeight;
-		}
+        /** Resize the canvas to fit the browser window
+        params:
+            canvas: JavaScript canvas object
+        */
+        function resizeCanvas(canvas) {
+            canvas.width = document.body.clientWidth;
+            canvas.height = document.body.clientHeight;
+        }
 
-		/** Trim a string-formatted decimal down to three decimal places
-		params:
-			num: string-formatted decimal
-		return: trimmed string-formatted decimal
-		*/
-		function toThreePlaces(num) {
-			var trimmed = num + "";
-			var dec = trimmed.indexOf(".");
-			return trimmed.substr(0, dec + 4);
-		}
+        /** Trim a string-formatted decimal down to three decimal places
+        params:
+            num: string-formatted decimal
+        return: trimmed string-formatted decimal
+        */
+        function toThreePlaces(num) {
+            var trimmed = num + "";
+            var dec = trimmed.indexOf(".");
+            return trimmed.substr(0, dec + 4);
+        }
 
-		/** Repaint the canvas */
-		function paint() {
-			var canvas = document.getElementById("playArea");
-			resizeCanvas(canvas); // resize the canvas
-			var ctx = canvas.getContext("2d");
-			var width = canvas.width;
-			var height = canvas.height;
+        /** Repaint the canvas */
+        function paint() {
+            var canvas = document.getElementById("playArea");
+            resizeCanvas(canvas); // resize the canvas
+            var ctx = canvas.getContext("2d");
+            var width = canvas.width;
+            var height = canvas.height;
 
-			var camX = getClientShip().xPos;
-			var camY = getClientShip().yPos;
+            var camX = getClientShip().xPos;
+            var camY = getClientShip().yPos;
 
-			ctx.font = "18px Arial";
-			ctx.fillStyle = "#FFFFFF";
-			if(!observing)
-			{
-				// write ship data to canvas
-				ctx.fillText("x pos: " + toThreePlaces(getClientShip().xPos), 10, 20);
-				ctx.fillText("y pos: " + toThreePlaces(getClientShip().yPos), 10, 40);
-				ctx.fillText("rot: " + toThreePlaces(getClientShip().theta), 10, 60);
-				ctx.fillText("lin vel: " + toThreePlaces(getClientShip().linVel), 10, 80);
-				ctx.fillText("rot vel: " + toThreePlaces(getClientShip().rotVel), 10, 100);
-			}
+            ctx.font = "18px Arial";
+            ctx.fillStyle = "#FFFFFF";
+            if (!observing) {
+                // write ship data to canvas
+                ctx.fillText("x pos: " + toThreePlaces(getClientShip().xPos), 10, 20);
+                ctx.fillText("y pos: " + toThreePlaces(getClientShip().yPos), 10, 40);
+                ctx.fillText("rot: " + toThreePlaces(getClientShip().theta), 10, 60);
+                ctx.fillText("lin vel: " + toThreePlaces(getClientShip().linVel), 10, 80);
+                ctx.fillText("rot vel: " + toThreePlaces(getClientShip().rotVel), 10, 100);
+            }
 
-			// draw stars on canvas
-			for(var u = 0; u < stars.length; u++)
-			{
-				var star = stars[u];
-				if(!(Math.abs(getClientShip().yPos - star.y) > height/2 + 10 || Math.abs(getClientShip().xPos - star.x) > width/2 + 10)) // check if star is in range
-				{
-					reset(ctx);
-					ctx.translate(camX - star.x, camY - star.y);
+            // draw stars on canvas
+            for (var u = 0; u < stars.length; u++) {
+                var star = stars[u];
+                if (!(Math.abs(getClientShip().yPos - star.y) > height / 2 + 10 || Math.abs(getClientShip().xPos - star.x) > width / 2 + 10)) // check if star is in range
+                {
+                    reset(ctx);
+                    ctx.translate(camX - star.x, camY - star.y);
 
-					if(getClientShip().linVel > 41 && Math.abs(getClientShip().rotVel) < 2) // if ship is in warp-drive
-					{
-						// draw some stretchy stars
-						var stretch = (45.0/40.0)*(getClientShip().linVel - 41) + 15;
-						var angle = toStandard(getClientShip().theta + 90) * Math.PI / 180.0;
-						ctx.strokeStyle = "#FFFFFF";
-						ctx.lineWidth = 2;
-						ctx.beginPath();
-						ctx.moveTo(width/2 - stretch*Math.cos(angle), height/2 - stretch*Math.sin(angle));
-						ctx.lineTo(width/2 + stretch*Math.cos(angle), height/2 + stretch*Math.sin(angle));
-						ctx.stroke();
-					}
-					else
-					{
-						// draw some points
-						ctx.fillRect(width/2 - 2, height/2 - 2, 4, 4);
-					}
-				}
-			}
+                    if (getClientShip().linVel > 41 && Math.abs(getClientShip().rotVel) < 2) // if ship is in warp-drive
+                    {
+                        // draw some stretchy stars
+                        var stretch = (45.0 / 40.0) * (getClientShip().linVel - 41) + 15;
+                        var angle = toStandard(getClientShip().theta + 90) * Math.PI / 180.0;
+                        ctx.strokeStyle = "#FFFFFF";
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(width / 2 - stretch * Math.cos(angle), height / 2 - stretch * Math.sin(angle));
+                        ctx.lineTo(width / 2 + stretch * Math.cos(angle), height / 2 + stretch * Math.sin(angle));
+                        ctx.stroke();
+                    }
+                    else {
+                        // draw some points
+                        ctx.fillRect(width / 2 - 2, height / 2 - 2, 4, 4);
+                    }
+                }
+            }
 
-			// draw all ships
-			var drawnShip = null;
-			for(var s = 0; s < universe.ships.length; s++)
-			{
-				drawnShip = universe.ships[s];
+            // draw all ships
+            var drawnShip = null;
+            for (var s = 0; s < universe.ships.length; s++) {
+                drawnShip = universe.ships[s];
 
-				if(Math.abs(getClientShip().yPos - drawnShip.yPos) > height/2 + 60 || Math.abs(getClientShip().xPos - drawnShip.xPos) > width/2 + 60) // check if ship is in view
-				{
-					if(drawnShip != getClientShip())
-					{
-						// draw radar pointer to ship
-						reset(ctx);
-						ctx.fillStyle = drawnShip.color;
+                if (Math.abs(getClientShip().yPos - drawnShip.yPos) > height / 2 + 60 || Math.abs(getClientShip().xPos - drawnShip.xPos) > width / 2 + 60) // check if ship is in view
+                {
+                    if (drawnShip != getClientShip()) {
+                        // draw radar pointer to ship
+                        reset(ctx);
+                        ctx.fillStyle = drawnShip.color;
 
-						ctx.translate(width/2, height/2);
-						ctx.rotate(Math.PI / 2);
-						ctx.rotate(Math.atan2((getClientShip().yPos - drawnShip.yPos) , (getClientShip().xPos - drawnShip.xPos)));
-						ctx.translate(-width/2, -height/2);
+                        ctx.translate(width / 2, height / 2);
+                        ctx.rotate(Math.PI / 2);
+                        ctx.rotate(Math.atan2((getClientShip().yPos - drawnShip.yPos), (getClientShip().xPos - drawnShip.xPos)));
+                        ctx.translate(-width / 2, -height / 2);
 
-						ctx.beginPath();
-						ctx.moveTo(width/2, height/2 - 120);
-						ctx.lineTo(width/2 + 12, height/2 - 100);
-						ctx.lineTo(width/2 - 12, height/2 - 100);
-						ctx.closePath();
-						ctx.fill();
-					}
-				}
-				else
-				{
-					if((drawnShip == getClientShip() && !observing) || drawnShip != getClientShip()) // experimental observer mode check
-					{
-						// draw the ship
-						reset(ctx);
-						ctx.translate(camX - drawnShip.xPos, camY - drawnShip.yPos);
-						ctx.fillStyle = drawnShip.color;
-						ctx.translate(width/2, height/2);
-						ctx.rotate(toStandard(drawnShip.theta) * Math.PI / 180.0);
-						ctx.translate(-width/2, -height/2);
+                        ctx.beginPath();
+                        ctx.moveTo(width / 2, height / 2 - 120);
+                        ctx.lineTo(width / 2 + 12, height / 2 - 100);
+                        ctx.lineTo(width / 2 - 12, height / 2 - 100);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+                else {
+                    if ((drawnShip == getClientShip() && !observing) || drawnShip != getClientShip()) // experimental observer mode check
+                    {
+                        // draw the ship
+                        reset(ctx);
+                        ctx.translate(camX - drawnShip.xPos, camY - drawnShip.yPos);
+                        ctx.fillStyle = drawnShip.color;
+                        ctx.translate(width / 2, height / 2);
+                        ctx.rotate(toStandard(drawnShip.theta) * Math.PI / 180.0);
+                        ctx.translate(-width / 2, -height / 2);
 
-						ctx.beginPath();
-						ctx.moveTo(width/2, height/2 - 36);
-						ctx.lineTo(width/2 + 30, height/2 + 30);
-						ctx.lineTo(width/2 - 30, height/2 + 30);
-						ctx.closePath();
-						ctx.fill();
-					}
-				}
-			}
+                        ctx.beginPath();
+                        ctx.moveTo(width / 2, height / 2 - 36);
+                        ctx.lineTo(width / 2 + 30, height / 2 + 30);
+                        ctx.lineTo(width / 2 - 30, height / 2 + 30);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+            }
 
-			// is the ship transitioning to warp speed?
-			if(isWarping(getClientShip()))
-			{
-				// flash the screen white
-				reset(ctx);
-				ctx.fillStyle = "#FFFFFF";
-				ctx.fillRect(-5, -5, width + 10, height + 10);
-			}
-		}
-		
-		/** Reset the canvas context transform */
-		function reset(ctx)
-		{
-			ctx.resetTransform();
-			ctx.translate(0, 0.5); // half a pixel to prevent blurring
-			ctx.lineWidth = 1;
-		}
+            // is the ship transitioning to warp speed?
+            if (isWarping(getClientShip())) {
+                // flash the screen white
+                reset(ctx);
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fillRect(-5, -5, width + 10, height + 10);
+            }
+        }
 
-		// UTIL
-		
-		/** Convert a bearing to a standard degree measure
-		params:
-			bearing: angle in bearing
-		return: angle in standard
-		*/
-		function toStandard(bearing)
-		{
-			return (bearing - 90) * -1;
-		}
+        /** Reset the canvas context transform */
+        function reset(ctx) {
+            ctx.resetTransform();
+            ctx.translate(0, 0.5); // half a pixel to prevent blurring
+            ctx.lineWidth = 1;
+        }
 
-		/** Linear search through array
-		params:
-			haystack: array to search
-			needle: target
-		return: index of target or -1 if not found
-		*/
-		function indexOf(haystack, needle)
-		{
-			for(var i = 0; i < haystack.length; i++)
-			{
-				if(haystack[i] == needle) return i;
-			}
-			return -1;
-		}
+        // UTIL
 
-		// INPUT
+        /** Convert a bearing to a standard degree measure
+        params:
+            bearing: angle in bearing
+        return: angle in standard
+        */
+        function toStandard(bearing) {
+            return (bearing - 90) * -1;
+        }
 
-		var keys = [];
-		document.onkeydown = function(evt) { // register key press
-			if(indexOf(keys, evt.keyCode) == -1) keys.push(evt.keyCode); // check if key already registered before registering
-		};
-		document.onkeyup = function(evt) { // register key release
-			var index = indexOf(keys, evt.keyCode);
-			if(index > -1) keys.splice(index, 1);
-			if(evt.keyCode == 81) observing = !observing;
-		};
+        /** Linear search through array
+        params:
+            haystack: array to search
+            needle: target
+        return: index of target or -1 if not found
+        */
+        function indexOf(haystack, needle) {
+            for (var i = 0; i < haystack.length; i++) {
+                if (haystack[i] == needle) return i;
+            }
+            return -1;
+        }
 
-		// GAME
+        // INPUT
 
-		/** Return the client ship through linear search
-		return: client ship object
-		NOTE: it would be way more efficient to keep a separate variable for the client ship, should this project be revived
-		*/
-		function getClientShip() {
-			for(var s = 0; s < universe.ships.length; s++) {
-				if(universe.ships[s].id == socket.id) return universe.ships[s];
-			}
-			return null;
-		}
+        var keys = [];
+        document.onkeydown = function (evt) { // register key press
+            if (indexOf(keys, evt.keyCode) == -1) keys.push(evt.keyCode); // check if key already registered before registering
+        };
+        document.onkeyup = function (evt) { // register key release
+            var index = indexOf(keys, evt.keyCode);
+            if (index > -1) keys.splice(index, 1);
+            if (evt.keyCode == 81) observing = !observing;
+        };
 
-		/** Replace an instance of a ship
-		params:
-			id: ship id
-			newship: new ship data
-		*/
-		function replaceShip(id, newship) {
-			for(var i = 0; i < universe.ships.length; i++) {
-				if(universe.ships[i].id == id)
-				{
-					universe.ships.splice(i, 1, newship);
-					return;
-				}
-			}
-		}
+        // GAME
 
-		/** Check if a ship is transitioning to warp speed
-		params:
-			ship: the ship to check
-		return: true if transitioning, false otherwise
-		*/
-		function isWarping(ship) {
-			return (ship.linVel >= 40.5 && ship.linVel <= 41 && Math.abs(ship.rotVel) < 2);
-		}
+        /** Return the client ship through linear search
+        return: client ship object
+        NOTE: it would be way more efficient to keep a separate variable for the client ship, should this project be revived
+        */
+        function getClientShip() {
+            for (var s = 0; s < universe.ships.length; s++) {
+                if (universe.ships[s].id == socket.id) return universe.ships[s];
+            }
+            return null;
+        }
 
-		/** Check if a star chunk is populated
-		params:
-			cx: chunk x coordinate
-			cy: chunk y coordinate
-		return: true if populated, false if not
-		*/
-		function populated(cx, cy) {
-			for(var ch = 0; ch < chunks.length; ch++)
-			{
-				if(chunks[ch].x == cx && chunks[ch].y == cy)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
+        /** Replace an instance of a ship
+        params:
+            id: ship id
+            newship: new ship data
+        */
+        function replaceShip(id, newship) {
+            for (var i = 0; i < universe.ships.length; i++) {
+                if (universe.ships[i].id == id) {
+                    universe.ships.splice(i, 1, newship);
+                    return;
+                }
+            }
+        }
 
-		/** Populate a star chunk
-		params:
-			cx: chunk x coordinate
-			cy: chunk y coordinate
-		*/
-		function genChunk(cx, cy) {
-			chunks.push({x:cx, y:cy});
-			console.log("Generated sector (" + cx + ", " + cy + ")");
-			for(var i = 0; i < 5000; i++)
-			{
-				var starX = 10000*(cx + Math.random());
-				var starY = 10000*(cy + Math.random());
-				stars.push({x:starX, y:starY});
-			}
-		}
+        /** Check if a ship is transitioning to warp speed
+        params:
+            ship: the ship to check
+        return: true if transitioning, false otherwise
+        */
+        function isWarping(ship) {
+            return (ship.linVel >= 40.5 && ship.linVel <= 41 && Math.abs(ship.rotVel) < 2);
+        }
 
-		/** Tick function */
-		function tick()
-		{
-			if(!observing)
-			{
-				// caluclate ship chunk coordinates
-				var shipCX = Math.floor(getClientShip().xPos / 10000);
-				var shipCY = Math.floor(getClientShip().yPos / 10000);
-				// populate chunks around the client ship
-				for(var ox = -1; ox < 2; ox++) {
-					for(var oy = -1; oy < 2; oy++) {
-						if(!populated(shipCX + ox, shipCY + oy))
-							genChunk(shipCX + ox, shipCY + oy);
-					}
-				}
+        /** Check if a star chunk is populated
+        params:
+            cx: chunk x coordinate
+            cy: chunk y coordinate
+        return: true if populated, false if not
+        */
+        function populated(cx, cy) {
+            for (var ch = 0; ch < chunks.length; ch++) {
+                if (chunks[ch].x == cx && chunks[ch].y == cy) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-				if(indexOf(keys, 65) > -1) // D key pressed, rotate clockwise
-					getClientShip().rotVel += (getClientShip().rotVel < 12 ? .5 : .25);
-				if(indexOf(keys, 68) > -1) // A key pressed, rotate counter-clockwise
-					getClientShip().rotVel -= (getClientShip().rotVel > -12 ? .5 : .25);
-				if(indexOf(keys, 87) > -1) // W key pressed, speed up
-					getClientShip().linVel += (getClientShip().linVel < 80 ? (getClientShip().linVel > 41 ? 1.2 : .3) : .15);
-				if(indexOf(keys, 83) > -1) // S key pressed, slow down
-					getClientShip().linVel -= .5;
-					
-				if(getClientShip().linVel > 41 && Math.abs(getClientShip().rotVel) > 2) // limit rotational velocity if ship is going warp-speed
-					getClientShip().rotVel = (getClientShip().rotVel > 0) ? 2 : -2;
-			}
+        /** Populate a star chunk
+        params:
+            cx: chunk x coordinate
+            cy: chunk y coordinate
+        */
+        function genChunk(cx, cy) {
+            chunks.push({ x: cx, y: cy });
+            console.log("Generated sector (" + cx + ", " + cy + ")");
+            for (var i = 0; i < 5000; i++) {
+                var starX = 10000 * (cx + Math.random());
+                var starY = 10000 * (cy + Math.random());
+                stars.push({ x: starX, y: starY });
+            }
+        }
 
-			// all ships
-			var ship = null;
-			for(var s = 0; s < universe.ships.length; s++)
-			{
-				ship = universe.ships[s];
+        /** Tick function */
+        function tick() {
+            if (!observing) {
+                // caluclate ship chunk coordinates
+                var shipCX = Math.floor(getClientShip().xPos / 10000);
+                var shipCY = Math.floor(getClientShip().yPos / 10000);
+                // populate chunks around the client ship
+                for (var ox = -1; ox < 2; ox++) {
+                    for (var oy = -1; oy < 2; oy++) {
+                        if (!populated(shipCX + ox, shipCY + oy))
+                            genChunk(shipCX + ox, shipCY + oy);
+                    }
+                }
 
-				if(ship.linVel > 0) ship.linVel -= .15;
-				if(ship.linVel < 0) ship.linVel = 0;
-				if(ship.rotVel > 0) ship.rotVel -= .25;
-				if(ship.rotVel < 0) ship.rotVel += .25;
-				ship.theta += ship.rotVel;
-				if(ship.theta > 360) ship.theta -= 360;
-				if(ship.theta < 0) ship.theta += 360;
+                if (indexOf(keys, 65) > -1) // D key pressed, rotate clockwise
+                    getClientShip().rotVel += (getClientShip().rotVel < 12 ? .5 : .25);
+                if (indexOf(keys, 68) > -1) // A key pressed, rotate counter-clockwise
+                    getClientShip().rotVel -= (getClientShip().rotVel > -12 ? .5 : .25);
+                if (indexOf(keys, 87) > -1) // W key pressed, speed up
+                    getClientShip().linVel += (getClientShip().linVel < 80 ? (getClientShip().linVel > 41 ? 1.2 : .3) : .15);
+                if (indexOf(keys, 83) > -1) // S key pressed, slow down
+                    getClientShip().linVel -= .5;
 
-				if(ship.theta == 0) ship.yPos -= ship.linVel;
-				else if(ship.theta == 90) ship.xPos += ship.linVel;
-				else if(ship.theta == 180) ship.yPos += ship.linVel;
-				else if(ship.theta == 270) ship.xPos -= ship.linVel;
-				else {
-					ship.yPos += Math.cos(toStandard(ship.theta) * Math.PI / 180.0)*ship.linVel;
-					ship.xPos += -Math.sin(toStandard(ship.theta) * Math.PI / 180.0)*ship.linVel;
-				}
-			}
+                if (getClientShip().linVel > 41 && Math.abs(getClientShip().rotVel) > 2) // limit rotational velocity if ship is going warp-speed
+                    getClientShip().rotVel = (getClientShip().rotVel > 0) ? 2 : -2;
+            }
 
-			socket.emit('update', getClientShip());
+            // all ships
+            var ship = null;
+            for (var s = 0; s < universe.ships.length; s++) {
+                ship = universe.ships[s];
 
-			paint();
-		}
+                if (ship.linVel > 0) ship.linVel -= .15;
+                if (ship.linVel < 0) ship.linVel = 0;
+                if (ship.rotVel > 0) ship.rotVel -= .25;
+                if (ship.rotVel < 0) ship.rotVel += .25;
+                ship.theta += ship.rotVel;
+                if (ship.theta > 360) ship.theta -= 360;
+                if (ship.theta < 0) ship.theta += 360;
 
-		// SERVER INTERACTION
-		var socket = io(); // establish socket to server
+                if (ship.theta == 0) ship.yPos -= ship.linVel;
+                else if (ship.theta == 90) ship.xPos += ship.linVel;
+                else if (ship.theta == 180) ship.yPos += ship.linVel;
+                else if (ship.theta == 270) ship.xPos -= ship.linVel;
+                else {
+                    ship.yPos += Math.cos(toStandard(ship.theta) * Math.PI / 180.0) * ship.linVel;
+                    ship.xPos += -Math.sin(toStandard(ship.theta) * Math.PI / 180.0) * ship.linVel;
+                }
+            }
 
-		/** Server update handler
-		params:
-			rec: received universe object
-		*/
-		socket.on('universe', function(rec){
-			if(universe == null) // is there not a local universe?
-			{
-				universe = rec; // set local universe copy to server copy
-				setInterval(tick, 35); // set tick function interval
-			}
-			else {
-				var temp = getClientShip();
-				universe = rec; // update the local universe with the server copy
-				replaceShip(socket.id, temp); // reinsert the client ship
-			}
-		});
+            socket.emit('update', getClientShip());
+
+            paint();
+        }
+
+        // SERVER INTERACTION
+        var socket = io(); // establish socket to server
+
+        /** Server update handler
+        params:
+            rec: received universe object
+        */
+        socket.on('universe', function (rec) {
+            if (universe == null) // is there not a local universe?
+            {
+                universe = rec; // set local universe copy to server copy
+                setInterval(tick, 35); // set tick function interval
+            }
+            else {
+                var temp = getClientShip();
+                universe = rec; // update the local universe with the server copy
+                replaceShip(socket.id, temp); // reinsert the client ship
+            }
+        });
 
     </script>
-  </head>
-  <body>
+</head>
+
+<body>
     <canvas id="playArea"></canvas>
-  </body>
+</body>
+
 </html>
