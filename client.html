@@ -51,7 +51,7 @@ Client-side HTML file
         function toThreePlaces(num) {
             var trimmed = num + "";
             var dec = trimmed.indexOf(".");
-            return trimmed.substr(0, dec + 4);
+            return trimmed.substring(0, dec + 4);
         }
 
         /** Repaint the canvas */
@@ -103,10 +103,26 @@ Client-side HTML file
                 }
             }
 
+            // draw all lasers
+            for (var l = 0; l < universe.lasers.length; l++) {
+                var drawnLaser = universe.lasers[l];
+                reset(ctx);
+                ctx.strokeStyle = drawnLaser.color;
+                ctx.lineWidth = 2;
+                var stretch = 50;
+                var angle = toStandard(drawnLaser.theta + 90) * Math.PI / 180.0;
+
+                ctx.translate(camX - drawnLaser.xPos, camY - drawnLaser.yPos);
+                
+                ctx.beginPath();
+                ctx.moveTo(width / 2 - stretch * Math.cos(angle), height / 2 - stretch * Math.sin(angle));
+                ctx.lineTo(width / 2 + stretch * Math.cos(angle), height / 2 + stretch * Math.sin(angle));
+                ctx.stroke();
+            }
+
             // draw all ships
-            var drawnShip = null;
             for (var s in universe.ships) {
-                drawnShip = universe.ships[s];
+                var drawnShip = universe.ships[s];
 
                 if (Math.abs(getClientShip().yPos - drawnShip.yPos) > height / 2 + 60 || Math.abs(getClientShip().xPos - drawnShip.xPos) > width / 2 + 60) // check if ship is in view
                 {
@@ -270,31 +286,40 @@ Client-side HTML file
                     getClientShip().linVel += (getClientShip().linVel < 80 ? (getClientShip().linVel > 41 ? 1.2 : .3) : .15);
                 if (indexOf(keys, 83) > -1) // S key pressed, slow down
                     getClientShip().linVel -= .5;
+                if (indexOf(keys, 32) > -1 && getClientShip().laserTimer == 0) // space bar pressed, shoot laser
+                {
+                    getClientShip().laserTimer = 144;
+                    socket.emit('fire');
+                }
 
                 if (getClientShip().linVel > 41 && Math.abs(getClientShip().rotVel) > 2) // limit rotational velocity if ship is going warp-speed
                     getClientShip().rotVel = (getClientShip().rotVel > 0) ? 2 : -2;
+            }
+
+            // all lasers
+            for (var l = 0; l < universe.lasers.length; l++) {
+                var laser = universe.lasers[l];
+
+                laser.yPos += Math.cos(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
+                laser.xPos += -Math.sin(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
             }
 
             // all ships
             for (var s in universe.ships) {
                 var ship = universe.ships[s];
 
+                if(ship.laserTimer > 0) ship.laserTimer--;
+
                 if (ship.linVel > 0) ship.linVel -= .15;
                 if (ship.linVel < 0) ship.linVel = 0;
                 if (ship.rotVel > 0) ship.rotVel -= .25;
                 if (ship.rotVel < 0) ship.rotVel += .25;
                 ship.theta += ship.rotVel;
-                if (ship.theta > 360) ship.theta -= 360;
-                if (ship.theta < 0) ship.theta += 360;
+                while(ship.theta < 0) ship.theta += 360;
+                ship.theta = ship.theta % 360;
 
-                if (ship.theta == 0) ship.yPos -= ship.linVel;
-                else if (ship.theta == 90) ship.xPos += ship.linVel;
-                else if (ship.theta == 180) ship.yPos += ship.linVel;
-                else if (ship.theta == 270) ship.xPos -= ship.linVel;
-                else {
-                    ship.yPos += Math.cos(toStandard(ship.theta) * Math.PI / 180.0) * ship.linVel;
-                    ship.xPos += -Math.sin(toStandard(ship.theta) * Math.PI / 180.0) * ship.linVel;
-                }
+                ship.yPos += Math.cos(toStandard(ship.theta) * Math.PI / 180.0) * ship.linVel;
+                ship.xPos += -Math.sin(toStandard(ship.theta) * Math.PI / 180.0) * ship.linVel;
             }
 
             socket.emit('update', getClientShip());

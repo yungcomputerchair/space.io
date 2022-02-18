@@ -39,6 +39,14 @@ var universe = {
 
 // Periodic tick function
 function tick() {
+    // tick lasers
+    universe.lasers.forEach(laser => {
+        laser.yPos += Math.cos(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
+        laser.xPos += -Math.sin(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
+        laser.timer--;
+    });
+    universe.lasers = universe.lasers.filter(laser => laser.timer > 0);
+
     io.emit('universe', universe); // update the universe for all clients
 }
 
@@ -52,6 +60,10 @@ function removeShip(id) {
 
     delete universe.ships[id];
     return true;
+}
+
+function toStandard(bearing) {
+    return (bearing - 90) * -1;
 }
 
 /** Inserts or updates a ship in the universe
@@ -80,8 +92,9 @@ io.on('connection', function (socket) {
         yPos: 0, // y coordinate
         theta: Math.random() * 360, // random angle in degrees
         linVel: 0, // linear velocity in units/tick
-        rotVel: 0 // rotational velocity in degrees/tick
-    }
+        rotVel: 0, // rotational velocity in degrees/tick
+        laserTimer: 0 // cooldown to shoot laser
+    };
 
     updateShip(socket.id, clientShip); // add new ship
     socket.emit('universe', universe); // send the universe object to the client
@@ -93,6 +106,20 @@ io.on('connection', function (socket) {
     socket.on('update', function (rec) {
         // TODO validate input
         updateShip(socket.id, rec); // replace the server's current copy of the client's ship with the new data
+    });
+
+    socket.on('fire', function() {
+        var laser = {
+            id: socket.id,
+            color: universe.ships[socket.id].color,
+            xPos: universe.ships[socket.id].x,
+            yPos: universe.ships[socket.id].y,
+            theta: universe.ships[socket.id].theta,
+            vel: universe.ships[socket.id].linVel + 100,
+            timer: 29
+        };
+        universe.lasers.push(laser);
+        console.log("pew");
     });
 
     /** Disconnect handler */
