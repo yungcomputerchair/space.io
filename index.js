@@ -33,7 +33,7 @@ server.listen(PORT, function () {
 
 // Top-level container
 var universe = {
-    ships: [], // array of ships
+    ships: {}, // dict of ships
     lasers: [] // array of lasers
 }
 
@@ -47,30 +47,23 @@ params:
     id: client id #
 */
 function removeShip(id) {
-    for (var i = 0; i < universe.ships.length; i++) {
-        if (universe.ships[i].id == id) {
-            universe.ships.splice(i, 1);
-            return true;
-        }
-    }
-    return false;
+    if(universe.ships[id] == undefined)
+        return false;
+
+    delete universe.ships[id];
+    return true;
 }
 
-/** Replaces a ship in the universe ship array
+/** Inserts or updates a ship in the universe
 params:
     id: client id #
     newship: ship object to insert
 */
-function replaceShip(id, newship) {
-    for (var i = 0; i < universe.ships.length; i++) {
-        if (universe.ships[i].id == id) {
-            universe.ships.splice(i, 1, newship);
-            return;
-        }
-    }
+function updateShip(id, newship) {
+    universe.ships[id] = newship;
 }
 
-setInterval(tick, 17); // set interval in ms for tick function
+setInterval(tick, 35); // set interval in ms for tick function
 
 /** New connection handler
 params:
@@ -90,8 +83,7 @@ io.on('connection', function (socket) {
         rotVel: 0 // rotational velocity in degrees/tick
     }
 
-    universe.ships.push(clientShip); // add the new client ship to the universe ship array
-
+    updateShip(socket.id, clientShip); // add new ship
     socket.emit('universe', universe); // send the universe object to the client
 
     /** Update request handler
@@ -99,7 +91,8 @@ io.on('connection', function (socket) {
         rec: received client ship data
     */
     socket.on('update', function (rec) {
-        replaceShip(socket.id, rec); // replace the server's current copy of the client's ship with the new data
+        // TODO validate input
+        updateShip(socket.id, rec); // replace the server's current copy of the client's ship with the new data
     });
 
     /** Disconnect handler */

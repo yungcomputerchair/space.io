@@ -105,7 +105,7 @@ Client-side HTML file
 
             // draw all ships
             var drawnShip = null;
-            for (var s = 0; s < universe.ships.length; s++) {
+            for (var s in universe.ships) {
                 drawnShip = universe.ships[s];
 
                 if (Math.abs(getClientShip().yPos - drawnShip.yPos) > height / 2 + 60 || Math.abs(getClientShip().xPos - drawnShip.xPos) > width / 2 + 60) // check if ship is in view
@@ -208,24 +208,7 @@ Client-side HTML file
         NOTE: it would be way more efficient to keep a separate variable for the client ship, should this project be revived
         */
         function getClientShip() {
-            for (var s = 0; s < universe.ships.length; s++) {
-                if (universe.ships[s].id == socket.id) return universe.ships[s];
-            }
-            return null;
-        }
-
-        /** Replace an instance of a ship
-        params:
-            id: ship id
-            newship: new ship data
-        */
-        function replaceShip(id, newship) {
-            for (var i = 0; i < universe.ships.length; i++) {
-                if (universe.ships[i].id == id) {
-                    universe.ships.splice(i, 1, newship);
-                    return;
-                }
-            }
+            return universe.ships[socket.id];
         }
 
         /** Check if a ship is transitioning to warp speed
@@ -295,9 +278,8 @@ Client-side HTML file
             }
 
             // all ships
-            var ship = null;
-            for (var s = 0; s < universe.ships.length; s++) {
-                ship = universe.ships[s];
+            for (var s in universe.ships) {
+                var ship = universe.ships[s];
 
                 if (ship.linVel > 0) ship.linVel -= .15;
                 if (ship.linVel < 0) ship.linVel = 0;
@@ -330,16 +312,15 @@ Client-side HTML file
             rec: received universe object
         */
         socket.on('universe', function (rec) {
-            if (universe == null) // is there not a local universe?
-            {
-                universe = rec; // set local universe copy to server copy
-                setInterval(tick, 35); // set tick function interval
+            if (universe == null) {
+                setInterval(tick, 35);
+                universe = rec;
+            } else {
+                var me = getClientShip();
+                universe = rec;
+                universe.ships[socket.id] = me;
             }
-            else {
-                var temp = getClientShip();
-                universe = rec; // update the local universe with the server copy
-                replaceShip(socket.id, temp); // reinsert the client ship
-            }
+            
         });
 
     </script>
