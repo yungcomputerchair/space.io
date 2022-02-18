@@ -109,6 +109,7 @@ io.on('connection', function (socket) {
     });
 
     socket.on('fire', function() {
+        if(universe.ships[socket.id].linVel > 40) return; // no pew pew during zoom zoom
         var laser = {
             id: socket.id,
             color: universe.ships[socket.id].color,
