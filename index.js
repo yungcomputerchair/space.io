@@ -41,8 +41,36 @@ var universe = {
 function tick() {
     // tick lasers
     universe.lasers.forEach(laser => {
+        // translate
         laser.yPos += Math.cos(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
         laser.xPos += -Math.sin(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
+
+        // hitscan
+        Object.entries(universe.ships).forEach(_ship => {
+            if(_ship[0] === laser.id) return;
+            var ship = _ship[1];
+            var coords = getRealCoords(ship);
+            var deltas = [];
+            for(var i = 0; i < 3; i++) {
+                var base = coords[i];
+                var next = coords[i + 1 < 3 ? i + 1 : 0];
+                var slopeDelta = (laser.yPos - base[1]) * (next[0] - base[0])
+                                - (laser.xPos - base[0]) * (next[1] - base[1]);
+                deltas.push(slopeDelta);
+            }
+            //console.log(deltas);
+            if(
+                (deltas[0] < 0
+                && deltas[1] < 0
+                && deltas[2] < 0) ||
+                (deltas[0] > 0
+                && deltas[1] > 0
+                && deltas[2] > 0)) {
+                    console.log(`${ship.id} hit by ${laser.id}`);
+                    laser.timer = 1;
+                }
+        });
+
         laser.timer--;
     });
     universe.lasers = universe.lasers.filter(laser => laser.timer > 0);
@@ -64,6 +92,67 @@ function removeShip(id) {
 
 function toStandard(bearing) {
     return (bearing - 90) * -1;
+}
+
+function multMatrix(...mats) {
+    if(mats.length == 1) return mats[0];
+
+    if(mats[0][0].length != mats[1].length) {
+        console.log("dimension mismatch");
+        return null;
+    }
+
+    var result = [];
+
+    for(var x = 0; x < mats[0].length; x++) {
+        result[x] = [];
+        for(var y = 0; y < mats[1][0].length; y++) {
+            var cell = 0;
+            for(var i = 0; i < mats[0][0].length; i++)
+                cell += mats[0][x][i] * mats[1][i][y];
+            result[x][y] = cell;
+        }
+    }
+
+    return multMatrix(result, ...mats.slice(2));
+}
+
+function getRealCoords(ship) {
+    var theta = toStandard(ship.theta) * Math.PI / 180.0;
+    var mat1 = [
+        [1, 0, ship.xPos],
+        [0, 1, ship.yPos],
+        [0, 0, 1]
+    ];
+    var mat2 = [
+        [Math.cos(theta), -Math.sin(theta), 0],
+        [Math.sin(theta), Math.cos(theta), 0],
+        [0, 0, 1]
+    ];
+    var mat3 = [
+        [1, 0, -ship.xPos],
+        [0, 1, -ship.yPos],
+        [0, 0, 1]
+    ];
+    var M = multMatrix(mat1, mat2, mat3);
+    var coords = [
+        [
+            [ship.xPos],
+            [ship.yPos - 36],
+            [1]
+        ],
+        [
+            [ship.xPos + 30],
+            [ship.yPos + 30],
+            [1]
+        ],
+        [
+            [ship.xPos - 30],
+            [ship.yPos + 30],
+            [1]
+        ]
+    ];
+    return coords.map(coord => multMatrix(M, coord));
 }
 
 /** Inserts or updates a ship in the universe
@@ -116,7 +205,7 @@ io.on('connection', function (socket) {
             xPos: universe.ships[socket.id].xPos,
             yPos: universe.ships[socket.id].yPos,
             theta: universe.ships[socket.id].theta,
-            vel: universe.ships[socket.id].linVel + 50,
+            vel: universe.ships[socket.id].linVel + 20,
             timer: 29
         };
         laser.yPos += Math.cos(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
