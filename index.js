@@ -81,6 +81,7 @@ function tick() {
     Object.entries(universe.ships).forEach(_ship => {
         var ship = _ship[1];
         if(ship.iFrames > 0) ship.iFrames--;
+        if(ship.laserTimer > 0) ship.laserTimer--;
     });
 
     io.emit('universe', universe); // update the universe for all clients
@@ -208,15 +209,18 @@ io.on('connection', function (socket) {
 
     socket.on('fire', function() {
         if(universe.ships[socket.id].linVel > 40) return; // no pew pew during zoom zoom
+        if(universe.ships[socket.id].laserTimer > 0) return; // no pew pew during cooldown
         var laser = {
             id: socket.id,
             color: universe.ships[socket.id].color,
             xPos: universe.ships[socket.id].xPos,
             yPos: universe.ships[socket.id].yPos,
             theta: universe.ships[socket.id].theta,
-            vel: universe.ships[socket.id].linVel + 20,
+            vel: universe.ships[socket.id].linVel + 25,
             timer: 29
         };
+        universe.ships[socket.id].laserTimer = 45;
+
         laser.yPos += Math.cos(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
         laser.xPos += -Math.sin(toStandard(laser.theta) * Math.PI / 180.0) * laser.vel;
         universe.lasers.push(laser);

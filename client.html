@@ -290,7 +290,7 @@ Client-side HTML file
                     getClientShip().linVel -= .5;
                 if (indexOf(keys, 32) > -1 && getClientShip().laserTimer == 0 && !isWarping(getClientShip())) // space bar pressed, shoot laser
                 {
-                    getClientShip().laserTimer = 85;
+                    getClientShip().laserTimer = 45;
                     socket.emit('fire');
                 }
 
