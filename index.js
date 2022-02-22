@@ -47,8 +47,8 @@ function tick() {
 
         // hitscan
         Object.entries(universe.ships).forEach(_ship => {
-            if(_ship[0] === laser.id) return;
             var ship = _ship[1];
+            if(ship.id === laser.id || ship.iFrames > 0) return;
             var coords = getRealCoords(ship);
             var deltas = [];
             for(var i = 0; i < 3; i++) {
@@ -68,12 +68,20 @@ function tick() {
                 && deltas[2] > 0)) {
                     console.log(`${ship.id} hit by ${laser.id}`);
                     laser.timer = 1;
+                    ship.iFrames = 35; // 1 second
+                    io.sockets.sockets.get(ship.id).emit('hit');
                 }
         });
 
         laser.timer--;
     });
     universe.lasers = universe.lasers.filter(laser => laser.timer > 0);
+
+    // tick ships
+    Object.entries(universe.ships).forEach(_ship => {
+        var ship = _ship[1];
+        if(ship.iFrames > 0) ship.iFrames--;
+    });
 
     io.emit('universe', universe); // update the universe for all clients
 }
@@ -182,7 +190,8 @@ io.on('connection', function (socket) {
         theta: Math.random() * 360, // random angle in degrees
         linVel: 0, // linear velocity in units/tick
         rotVel: 0, // rotational velocity in degrees/tick
-        laserTimer: 0 // cooldown to shoot laser
+        laserTimer: 0, // cooldown to shoot laser
+        iFrames: 0 // invincibility frames
     };
 
     updateShip(socket.id, clientShip); // add new ship

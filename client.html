@@ -147,20 +147,22 @@ Client-side HTML file
                 else {
                     if ((drawnShip == getClientShip() && !observing) || drawnShip != getClientShip()) // experimental observer mode check
                     {
-                        // draw the ship
-                        reset(ctx);
-                        ctx.translate(camX - drawnShip.xPos, camY - drawnShip.yPos);
-                        ctx.fillStyle = drawnShip.color;
-                        ctx.translate(width / 2, height / 2);
-                        ctx.rotate(toStandard(drawnShip.theta) * Math.PI / 180.0);
-                        ctx.translate(-width / 2, -height / 2);
+                        if(drawnShip.iFrames % 2 == 0) {
+                            // draw the ship
+                            reset(ctx);
+                            ctx.translate(camX - drawnShip.xPos, camY - drawnShip.yPos);
+                            ctx.fillStyle = drawnShip.color;
+                            ctx.translate(width / 2, height / 2);
+                            ctx.rotate(toStandard(drawnShip.theta) * Math.PI / 180.0);
+                            ctx.translate(-width / 2, -height / 2);
 
-                        ctx.beginPath();
-                        ctx.moveTo(width / 2, height / 2 - 36);
-                        ctx.lineTo(width / 2 + 30, height / 2 + 30);
-                        ctx.lineTo(width / 2 - 30, height / 2 + 30);
-                        ctx.closePath();
-                        ctx.fill();
+                            ctx.beginPath();
+                            ctx.moveTo(width / 2, height / 2 - 36);
+                            ctx.lineTo(width / 2 + 30, height / 2 + 30);
+                            ctx.lineTo(width / 2 - 30, height / 2 + 30);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
                     }
                 }
             }
@@ -317,6 +319,7 @@ Client-side HTML file
                 ship.theta += ship.rotVel;
                 while(ship.theta < 0) ship.theta += 360;
                 ship.theta = ship.theta % 360;
+                if(ship.iFrames > 0) ship.iFrames--;
 
                 ship.yPos += Math.cos(toStandard(ship.theta) * Math.PI / 180.0) * ship.linVel;
                 ship.xPos += -Math.sin(toStandard(ship.theta) * Math.PI / 180.0) * ship.linVel;
@@ -344,6 +347,11 @@ Client-side HTML file
                 universe.ships[socket.id] = me;
             }
             
+        });
+
+        socket.on('hit', () => {
+            if(universe != null)
+                getClientShip().iFrames = 35;
         });
 
     </script>
