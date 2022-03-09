@@ -34,8 +34,10 @@ function paint() {
     var camX = getClientShip().xPos;
     var camY = getClientShip().yPos;
 
-    ctx.font = "18px Arial";
+    ctx.font = "18px Kong";
     ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "bottom";
     if (!observing) {
         // write ship data to canvas
         ctx.fillText("x pos: " + toThreePlaces(getClientShip().xPos), 10, 20);
@@ -143,6 +145,44 @@ function paint() {
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(-5, -5, width + 10, height + 10);
     }
+
+    // draw scoreboard
+    if (indexOf(keys, 9) > -1) {
+        reset(ctx);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.fillRect(width/2 - 400, height/2 - 250, 800, 500);
+
+        var idy = -1;
+        var idx = 1;
+        for(var s in universe.ships) {
+            if(idx == 1) idy++;
+            idx = 1 - idx;
+            var x = idx * 400 + width/2 - 400;
+            var y = idy * 50 + height/2 - 250;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+            ctx.fillRect(x + 5, y + 5, 400 - 10, 50 - 5);
+
+            var ship = universe.ships[s];
+            //ctx.fillStyle = "#F00";
+            //ctx.fillRect(x + 8, y + 8, 20, 39);
+
+            ctx.fillStyle = ship.color;
+            ctx.beginPath();
+            ctx.moveTo(x + 8, y + 8);
+            ctx.lineTo(x + 52, y + 28);
+            ctx.lineTo(x + 8, y + 48);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.font = '20px Kong';
+            ctx.fillText(ship.name, x + 60, y + 27);
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(`${ship.kills} / ${ship.deaths} `, x + 5 + 400 - 10, y + 27);
+        }
+    }
 }
 
 /** Reset the canvas context transform */
@@ -180,9 +220,11 @@ function indexOf(haystack, needle) {
 
 var keys = [];
 document.onkeydown = function (evt) { // register key press
+    evt.preventDefault();
     if (indexOf(keys, evt.keyCode) == -1) keys.push(evt.keyCode); // check if key already registered before registering
 };
 document.onkeyup = function (evt) { // register key release
+    evt.preventDefault();
     var index = indexOf(keys, evt.keyCode);
     if (index > -1) keys.splice(index, 1);
     if (evt.keyCode == 81) observing = !observing;

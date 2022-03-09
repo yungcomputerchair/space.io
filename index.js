@@ -195,7 +195,9 @@ io.on('connection', function (socket) {
         linVel: 0, // linear velocity in units/tick
         rotVel: 0, // rotational velocity in degrees/tick
         laserTimer: 0, // cooldown to shoot laser
-        iFrames: 0 // invincibility frames
+        iFrames: 0, // invincibility frames
+        kills: 0,
+        deaths: 0
     };
 
     updateShip(socket.id, clientShip); // add new ship
