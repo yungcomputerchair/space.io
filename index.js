@@ -21,6 +21,9 @@ const server = USE_SSL ? https.createServer({
 const { Server } = require("socket.io");
 const io = new Server(server);
 
+// Static files
+app.use(express.static('public'));
+
 // Client file to send
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/client.html');
