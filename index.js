@@ -191,7 +191,8 @@ function updateShip(id, newship) {
         yPos: newship.yPos,
         theta: newship.theta,
         linVel: newship.linVel,
-        rotVel: newship.rotVel
+        rotVel: newship.rotVel,
+        name: newship.name
     };
 }
 
@@ -206,7 +207,7 @@ io.on('connection', function (socket) {
 
     var clientShip = {
         id: socket.id, // client id is the socket id
-        name: "Joe", // display name (unused)
+        name: "", // display name
         color: "#" + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6), // random hexadecimal color
         xPos: 0, // x coordinate
         yPos: 0, // y coordinate

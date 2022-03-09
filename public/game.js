@@ -118,15 +118,17 @@ function paint() {
         else {
             if ((drawnShip == getClientShip() && !observing) || drawnShip != getClientShip()) // experimental observer mode check
             {
+                // draw the ship
+                reset(ctx);
+                ctx.translate(camX - drawnShip.xPos, camY - drawnShip.yPos);
+                ctx.fillStyle = "#FFFFFF";
+                ctx.textAlign = "center";
+                ctx.fillText(drawnShip.name, width / 2, height / 2 - 50);
+                ctx.fillStyle = drawnShip.color;
+                ctx.translate(width / 2, height / 2);
+                ctx.rotate(toStandard(drawnShip.theta) * Math.PI / 180.0);
+                ctx.translate(-width / 2, -height / 2);
                 if(drawnShip.iFrames % 2 == 0) {
-                    // draw the ship
-                    reset(ctx);
-                    ctx.translate(camX - drawnShip.xPos, camY - drawnShip.yPos);
-                    ctx.fillStyle = drawnShip.color;
-                    ctx.translate(width / 2, height / 2);
-                    ctx.rotate(toStandard(drawnShip.theta) * Math.PI / 180.0);
-                    ctx.translate(-width / 2, -height / 2);
-
                     ctx.beginPath();
                     ctx.moveTo(width / 2, height / 2 - 36);
                     ctx.lineTo(width / 2 + 30, height / 2 + 30);
@@ -343,6 +345,7 @@ function tick() {
 
 // SERVER INTERACTION
 var socket = io(); // establish socket to server
+var uname = window.prompt("Please enter your name:", "Joe");
 
 /** Server update handler
 params:
@@ -352,6 +355,7 @@ socket.on('universe', function (rec) {
     if (universe == null) {
         setInterval(tick, 35);
         universe = rec;
+        getClientShip().name = uname;
     } else {
         var me = getClientShip();
         universe = rec;
