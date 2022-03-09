@@ -70,9 +70,16 @@ function tick() {
                 && deltas[1] > 0
                 && deltas[2] > 0)) {
                     console.log(`${ship.id} hit by ${laser.id}`);
+                    universe.ships[laser.id].kills++;
+                    universe.ships[ship.id].deaths++;
                     laser.timer = 1;
                     ship.iFrames = 35; // 1 second
-                    io.sockets.sockets.get(ship.id).emit('hit');
+                    io.emit('hit', {
+                        hitee: ship.id,
+                        hitter: laser.id,
+                        killCount: universe.ships[laser.id].kills,
+                        deathCount: universe.ships[ship.id].deaths
+                    });
                 }
         });
 
@@ -173,7 +180,19 @@ params:
     newship: ship object to insert
 */
 function updateShip(id, newship) {
-    universe.ships[id] = newship;
+
+    // new
+    if(!universe.ships[id]) universe.ships[id] = newship;
+
+    // patch
+    universe.ships[id] = {
+        ...universe.ships[id],
+        xPos: newship.xPos,
+        yPos: newship.yPos,
+        theta: newship.theta,
+        linVel: newship.linVel,
+        rotVel: newship.rotVel
+    };
 }
 
 setInterval(tick, 35); // set interval in ms for tick function

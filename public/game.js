@@ -360,7 +360,11 @@ socket.on('universe', function (rec) {
     
 });
 
-socket.on('hit', () => {
-    if(universe != null)
-        getClientShip().iFrames = 35;
+socket.on('hit', arg => {
+    if(universe != null) {
+        universe.ships[arg.hitee].deaths = arg.deathCount;
+        universe.ships[arg.hitter].kills = arg.killCount;
+
+        universe.ships[arg.hitee].iFrames = 35;
+    }
 });
