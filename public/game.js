@@ -146,12 +146,18 @@ function paint() {
     ctx.textAlign = "left";
     ctx.textBaseline = "bottom";
     if (!observing) {
-        // write ship data to canvas
+        // ship data
         ctx.fillText("x pos: " + toThreePlaces(getClientShip().xPos), 10, 20);
         ctx.fillText("y pos: " + toThreePlaces(getClientShip().yPos), 10, 40);
         ctx.fillText("rot: " + toThreePlaces(getClientShip().theta), 10, 60);
         ctx.fillText("lin vel: " + toThreePlaces(getClientShip().linVel), 10, 80);
         ctx.fillText("rot vel: " + toThreePlaces(getClientShip().rotVel), 10, 100);
+
+        // controls
+        ctx.fillText("controls", 10, height - 80);
+        ctx.fillText("move: W/A/S/D", 10, height - 60);
+        ctx.fillText("shoot: SPACE", 10, height - 40);
+        ctx.fillText("scoreboard: TAB", 10, height - 20);
     }
 
     // draw killfeed
