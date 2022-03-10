@@ -192,7 +192,7 @@ function updateShip(id, newship) {
         theta: newship.theta,
         linVel: newship.linVel,
         rotVel: newship.rotVel,
-        name: newship.name
+        name: newship.name.substring(0, 8)
     };
 }
 

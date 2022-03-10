@@ -2,6 +2,7 @@ var observing = false;
 var universe = null; // top-level container
 var stars = []; // star array
 var chunks = {}; // chunk dict
+var killfeed = []; // hit events
 
 /** Resize the canvas to fit the browser window
 params:
@@ -34,19 +35,6 @@ function paint() {
     var camX = getClientShip().xPos;
     var camY = getClientShip().yPos;
 
-    ctx.font = "18px Kong";
-    ctx.fillStyle = "#FFFFFF";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "bottom";
-    if (!observing) {
-        // write ship data to canvas
-        ctx.fillText("x pos: " + toThreePlaces(getClientShip().xPos), 10, 20);
-        ctx.fillText("y pos: " + toThreePlaces(getClientShip().yPos), 10, 40);
-        ctx.fillText("rot: " + toThreePlaces(getClientShip().theta), 10, 60);
-        ctx.fillText("lin vel: " + toThreePlaces(getClientShip().linVel), 10, 80);
-        ctx.fillText("rot vel: " + toThreePlaces(getClientShip().rotVel), 10, 100);
-    }
-
     // draw stars on canvas
     for (var u = 0; u < stars.length; u++) {
         var star = stars[u];
@@ -69,6 +57,7 @@ function paint() {
             }
             else {
                 // draw some points
+                ctx.fillStyle = "#FFFFFF";
                 ctx.fillRect(width / 2 - 2, height / 2 - 2, 4, 4);
             }
         }
@@ -123,6 +112,8 @@ function paint() {
                 ctx.translate(camX - drawnShip.xPos, camY - drawnShip.yPos);
                 ctx.fillStyle = "#FFFFFF";
                 ctx.textAlign = "center";
+                ctx.font = "18px Kong";
+                ctx.textBaseline = "bottom";
                 ctx.fillText(drawnShip.name, width / 2, height / 2 - 50);
                 ctx.fillStyle = drawnShip.color;
                 ctx.translate(width / 2, height / 2);
@@ -146,6 +137,50 @@ function paint() {
         reset(ctx);
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(-5, -5, width + 10, height + 10);
+    }
+
+    // draw stats
+    reset(ctx);
+    ctx.font = "18px Kong";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "bottom";
+    if (!observing) {
+        // write ship data to canvas
+        ctx.fillText("x pos: " + toThreePlaces(getClientShip().xPos), 10, 20);
+        ctx.fillText("y pos: " + toThreePlaces(getClientShip().yPos), 10, 40);
+        ctx.fillText("rot: " + toThreePlaces(getClientShip().theta), 10, 60);
+        ctx.fillText("lin vel: " + toThreePlaces(getClientShip().linVel), 10, 80);
+        ctx.fillText("rot vel: " + toThreePlaces(getClientShip().rotVel), 10, 100);
+    }
+
+    // draw killfeed
+    for(var i = 0; i < killfeed.length; i++) {
+        var hitEvent = killfeed[i];
+        var shipA = universe.ships[hitEvent.hitter];
+        var shipB = universe.ships[hitEvent.hitee];
+        var t1 = " " + shipA.name;
+        var mark = " > ";
+        var t2 = shipB.name + " ";
+        var fontSize = 18;
+        var size = (t1 + mark + t2).length * fontSize;
+
+        ctx.fillStyle = "#222";
+        ctx.fillRect(width - (size + 10), 10 + 50*i, size, 40);
+
+        ctx.font = "18px Kong";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+
+        ctx.fillStyle = shipA.color;
+        ctx.fillText(t1, width - (size + 10), 10 + 50*i + 20);
+
+        ctx.fillStyle = "#FFF";
+        ctx.fillText(mark, width - (size + 10) + fontSize * t1.length, 10 + 50*i + 20);
+
+        ctx.fillStyle = shipB.color;
+        ctx.fillText(t2, width - (size + 10) + fontSize * (t1.length + mark.length), 10 + 50*i + 20);
+
     }
 
     // draw scoreboard
@@ -345,7 +380,7 @@ function tick() {
 
 // SERVER INTERACTION
 var socket = io(); // establish socket to server
-var uname = window.prompt("Please enter your name:", "Joe");
+var uname = window.prompt("Please enter your name:", "Joe").substring(0, 8);
 
 /** Server update handler
 params:
@@ -368,7 +403,11 @@ socket.on('hit', arg => {
     if(universe != null) {
         universe.ships[arg.hitee].deaths = arg.deathCount;
         universe.ships[arg.hitter].kills = arg.killCount;
-
         universe.ships[arg.hitee].iFrames = 35;
+
+        killfeed.push({
+            ...arg,
+            timeout: 5 * 28 // 5ish seconds
+        });
     }
 });
