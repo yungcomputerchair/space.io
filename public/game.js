@@ -165,22 +165,20 @@ function paint() {
         var fontSize = 18;
         var size = (t1 + mark + t2).length * fontSize;
 
-        ctx.fillStyle = "#222";
+        ctx.fillStyle = "rgba(255, 255, 255, " + toThreePlaces(hitEvent.timeout / (5 * 28)) + ")";
         ctx.fillRect(width - (size + 10), 10 + 50*i, size, 40);
+        ctx.fillStyle = "#222";
+        ctx.fillRect(width - (size + 8), 12 + 50*i, size - 4, 36);
 
         ctx.font = "18px Kong";
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
-
         ctx.fillStyle = shipA.color;
-        ctx.fillText(t1, width - (size + 10), 10 + 50*i + 20);
-
+        ctx.fillText(t1, width - (size + 10), 10 + 50*i + 21);
         ctx.fillStyle = "#FFF";
-        ctx.fillText(mark, width - (size + 10) + fontSize * t1.length, 10 + 50*i + 20);
-
+        ctx.fillText(mark, width - (size + 10) + fontSize * t1.length, 10 + 50*i + 21);
         ctx.fillStyle = shipB.color;
-        ctx.fillText(t2, width - (size + 10) + fontSize * (t1.length + mark.length), 10 + 50*i + 20);
-
+        ctx.fillText(t2, width - (size + 10) + fontSize * (t1.length + mark.length), 10 + 50*i + 21);
     }
 
     // draw scoreboard
@@ -375,6 +373,11 @@ function tick() {
 
     socket.emit('update', getClientShip());
 
+    killfeed.forEach(ke => {
+        ke.timeout--;
+    });
+    killfeed = killfeed.filter(ke => ke.timeout > 0);
+
     paint();
 }
 
@@ -405,7 +408,7 @@ socket.on('hit', arg => {
         universe.ships[arg.hitter].kills = arg.killCount;
         universe.ships[arg.hitee].iFrames = 35;
 
-        killfeed.push({
+        killfeed.unshift({
             ...arg,
             timeout: 5 * 28 // 5ish seconds
         });
