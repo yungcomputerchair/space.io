@@ -2,6 +2,10 @@
   "name": "socket-space-server",
   "version": "0.1.1",
   "description": "socket.io app for space.io",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "express": "^4.17.2",
     "socket.io": "^4.4.1"
